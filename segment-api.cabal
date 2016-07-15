@@ -16,18 +16,20 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Web.Segment
-  build-depends:       base >= 4.7 && < 5
-                     , servant-client
-                     , text
-                     , uuid
-                     , time
-                     , email-validate
-                     , containers
-                     , country-codes
-                     , network-uri
-                     , cases
-                     , Decimal
-                     , currency
+  build-depends: aeson
+               , aeson-qq
+               , base >= 4.7 && < 5
+               , servant-client
+               , text
+               , uuid
+               , time
+               , email-validate
+               , containers
+               , country-codes
+               , network-uri
+               , cases
+               , Decimal
+               , currency
   default-language:    Haskell2010
 
 source-repository head

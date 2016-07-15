@@ -1,9 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
 module Web.Segment where
 
 import           Cases               (snakify)
 import           Control.Monad       (guard)
 import           Currency            (Currency)
+import           Data.Aeson          (ToJSON, Value, object, toJSON, (.=))
+import           Data.Aeson.QQ       (aesonQQ)
 import           Data.CountryCodes   (CountryCode)
 import           Data.Decimal        (Decimal)
 import           Data.Map            (Map)
@@ -16,23 +19,62 @@ import qualified Data.Text           as T
 import           Data.Time           (UTCTime)
 import           Data.Time.Calendar  (Day)
 import           Data.UUID
+import qualified Data.UUID           as UUID
+import           Data.Version        (showVersion)
 import           Network.URI         (URI)
+import           Paths_segment_api   (version)
 import           Servant.Client
 import           Text.Email.Validate (EmailAddress)
+-- data Client =
+--   Client {
+--     writeKey :: Key
+--   }
 
-data Client =
-  Client {
-    writeKey :: Key
-  }
+
+-- | The sent-at field should be applied as close to send-time as possible
+data BatchedMsg
+  = BatchedMsg UUID [FullMsg] UTCTime
+
+instance ToJSON BatchedMsg  where
+  toJSON (BatchedMsg uuid msgs sentAt) =
+    object ["context"   .= defaultContext
+           ,"batch"     .= msgs
+           ,"type"      .= ("batch"::Text)
+           ,"messageId" .= uuid
+           ,"sentAt"    .= sentAt
+           -- timestamp is meaningless here, so omit.
+           ]
+
+instance ToJSON FullMsg where
+  toJSON (FullMsg msg commonMsg) =
+    object (msgJson msg <> commonJson commonMsg)
+    where
+      commonJson  (CommonMsg sentAt timestamp uid) = []
+
+      msgJson msg = case msg of
+        Identify id props commonProps -> undefined
+        Track event props  -> undefined
+        Page pgname props  -> undefined
+        Screen screenName props  -> undefined
+        Group groupid props commonProps -> undefined
+        Alias from to -> undefined
+
+instance ToJSON UUID where
+  toJSON = toJSON . UUID.toText
+
+defaultContext = [aesonQQ|{"library" : { "name": "segment-api",
+                                         "version" : #{showVersion version} } }|]
+
+
 
 data FullMsg = FullMsg Msg CommonMsg
 
 data Msg
-  = Group GroupId (Properties GroupTrait) (Properties CommonTrait)
-  | Identify Id (Properties IdentifyTrait) (Properties CommonTrait)
+  = Identify Id (Properties IdentifyTrait) (Properties CommonTrait)
   | Track Event (Properties TrackProperty)
   | Page (Maybe PageName) (Properties PageProperty)
   | Screen (Maybe ScreenName) (Properties ScreenProperty)
+  | Group GroupId (Properties GroupTrait) (Properties CommonTrait)
   | Alias Id Id
 
 type Key = Text

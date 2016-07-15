@@ -46,18 +46,35 @@ instance ToJSON BatchedMsg  where
            ]
 
 instance ToJSON FullMsg where
-  toJSON (FullMsg msg commonMsg) =
+  toJSON (FullMsg freeForm msg commonMsg ) =
     object (msgJson msg <> commonJson commonMsg)
     where
       commonJson  (CommonMsg sentAt timestamp uid) = []
 
       msgJson msg = case msg of
-        Identify id props commonProps -> undefined
-        Track event props  -> undefined
+        Identify id props commonProps ->
+          [ "type" .= ("identify" :: Text)
+          , "traits" .= object (freeformJSON <> propertyJson props <> commonPropertyJson commonProps)
+          , "userId" .= toJSON id
+          ]
+        Track (Event event) props  ->
+          [ "type" .= ("track" :: Text)
+          , "event" .= event
+          , "properties" .= object (freeformJSON <> propertyJson props)
+          ]
         Page pgname props  -> undefined
         Screen screenName props  -> undefined
         Group groupid props commonProps -> undefined
         Alias from to -> undefined
+
+      propertyJson props = []
+      commonPropertyJson props = []
+      freeformJSON = Map.foldMapWithKey (\k v -> [k .= v]) freeForm
+
+
+
+instance ToJSON Id where
+  toJSON = undefined
 
 instance ToJSON UUID where
   toJSON = toJSON . UUID.toText
@@ -65,16 +82,23 @@ instance ToJSON UUID where
 defaultContext = [aesonQQ|{"library" : { "name": "segment-api",
                                          "version" : #{showVersion version} } }|]
 
+instance ToJSON TrackProperty where
+  toJSON = undefined
 
+data FullMsg = FullMsg Freeform Msg CommonMsg
 
-data FullMsg = FullMsg Msg CommonMsg
+-- We leave this as an empty datatype for now
+-- When we add vocabularies, we can add them as arms here, and
+-- avoid invalidating old code
+data TrackDefinedVocabulary
 
 data Msg
-  = Identify Id (Properties IdentifyTrait) (Properties CommonTrait)
-  | Track Event (Properties TrackProperty)
-  | Page (Maybe PageName) (Properties PageProperty)
+  = Identify Id               (Properties IdentifyTrait) (Properties CommonTrait)
+  | TrackSemantic TrackDefinedVocabulary
+  | Track Event               (Properties TrackProperty)
+  | Page (Maybe PageName)     (Properties PageProperty)
   | Screen (Maybe ScreenName) (Properties ScreenProperty)
-  | Group GroupId (Properties GroupTrait) (Properties CommonTrait)
+  | Group GroupId             (Properties GroupTrait) (Properties CommonTrait)
   | Alias Id Id
 
 type Key = Text
@@ -100,10 +124,11 @@ data CommonMsg =
     -- time when queued
   , timestamp :: UTCTime
   , uid       :: UUID
+  -- TODO lots more fields https://segment.com/docs/spec/common/
   }
 
 
-data Properties a = Properties Freeform [a]
+data Properties a = Properties [a]
 
 -- group traits
 data GroupTrait

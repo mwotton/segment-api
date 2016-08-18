@@ -15,21 +15,28 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Web.Segment
+  exposed-modules:     Web.Segment, Web.Segment.Types, Paths_segment_api
   build-depends: aeson
                , aeson-qq
                , base >= 4.7 && < 5
-               , servant-client
-               , text
-               , uuid
-               , time
-               , email-validate
+               , bytestring
+               , cases
                , containers
                , country-codes
-               , network-uri
-               , cases
-               , Decimal
+               , country-codes
                , currency
+               , Decimal
+               , email-validate
+               , http-client
+               , http-client-tls
+               , iproute
+               , network-uri
+               , servant
+               , servant-client
+               , text
+               , time
+               , transformers
+               , uuid
   default-language:    Haskell2010
 
 source-repository head
@@ -40,7 +47,7 @@ source-repository head
 test-suite tests
   type: exitcode-stdio-1.0
   main-is: SpecWrapper.hs
-  other-modules:  Spec
+  other-modules:  Spec, Web.SegmentSpec
   hs-source-dirs:
       test
   ghc-options: -Wall -fwarn-tabs -fno-warn-type-defaults -threaded -rtsopts -with-rtsopts=-N
@@ -48,3 +55,5 @@ test-suite tests
                , hspec
                , hspec-stack-rerun
                , segment-api
+               , uuid
+               , time

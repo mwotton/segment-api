@@ -77,7 +77,7 @@ instance ToJSON BatchedMsg  where
     ["context"   .= defaultContext
     ,"batch"     .= msgs
     ,"type"      .= ("batch"::Text)
-    ,"messageId" .= uuid
+    ,"messageId" .= UUID.toText uuid
     ,"sentAt"    .= sentAt
       -- timestamp is meaningless here, so omit.
     ]

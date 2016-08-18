@@ -153,8 +153,8 @@ type Freeform = Map Text Text
 emptyFreeform = Map.empty
 
 
-instance ToJSON UUID where
-  toJSON = toJSON . UUID.toText
+-- instance ToJSON UUID where
+--  toJSON = toJSON . UUID.toText
 
 emptyCommonMsg time uid = CommonMsg time uid Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 data CommonMsg =

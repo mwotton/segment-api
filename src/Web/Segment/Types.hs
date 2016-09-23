@@ -3,7 +3,7 @@
 module Web.Segment.Types where
 
 import           Control.Monad       (guard, mzero)
-import           Currency            (Currency)
+import           Currency            (ISO4217Currency)
 import           Data.Aeson          (FromJSON, ToJSON, Value (..), object,
                                       parseJSON, toJSON, (.:), (.=))
 import           Data.Aeson.QQ       (aesonQQ)
@@ -54,7 +54,7 @@ data FullMsg = FullMsg Freeform Msg CommonMsg
 
 data Msg
   = Identify
-    { idTrait :: IdTraits  }
+    { idTraits :: IdTraits  }
   | Track
     { trEvent      :: Text
     , trProperties :: TrackProperties
@@ -89,7 +89,6 @@ data IdTraits = IdTraits
   , idEmail       :: Maybe EmailAddress
   , idFirstName   :: Maybe Text
   , idGender      :: Maybe Text
-  , idId          :: Maybe Text
   , idLastName    :: Maybe Text
   , idPhone       :: Maybe Text
   , idTitle       :: Maybe Text
@@ -103,9 +102,9 @@ data TrackProperties = TrackProperties {
   -- it is entirely unclear why they would reserve this when they've
   -- already named the event under the "event" tag.
    trName     :: Maybe Text
- , trRevenue  :: Maybe Decimal
- , trCurrency :: Maybe Currency
- , trValue    :: Maybe Decimal
+ , trRevenue  :: Maybe Double
+ , trCurrency :: Maybe ISO4217Currency
+ , trValue    :: Maybe Double
  } deriving (Generic, Eq, Show, Typeable)
 
 data PageProperties = PageProperties

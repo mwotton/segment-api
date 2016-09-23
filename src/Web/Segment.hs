@@ -13,9 +13,10 @@ import           Cases                      (snakify)
 import           Control.Monad              (guard)
 import           Control.Monad.Trans.Except (ExceptT, runExceptT)
 import           Currency                   (Currency)
-import           Data.Aeson                 (ToJSON, Value, object, toJSON,
-                                             (.=))
-import           Data.Aeson                 (FromJSON)
+import           Data.Aeson                 (FromJSON, ToJSON, Value (..),
+                                             object, toJSON, (.=))
+import           Data.Aeson.Types           (Pair)
+
 import           Data.Aeson.QQ              (aesonQQ)
 import qualified Data.ByteString.Char8      as BS8
 import           Data.CountryCodes          (CountryCode)
@@ -24,6 +25,7 @@ import           Data.Decimal               (Decimal)
 import           Data.IP
 import           Data.Map                   (Map)
 import qualified Data.Map                   as Map
+import qualified Data.Map                   as M
 import           Data.Monoid                ((<>))
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
@@ -40,10 +42,12 @@ import           Network.HTTP.Client        (Manager, defaultManagerSettings,
                                              newManager)
 import           Network.HTTP.Client.TLS
 import           Network.URI                (URI)
+import           Network.URI                (uriToString)
 import           Paths_segment_api          (version)
 import           Servant.API
 import           Servant.Client
 import           Text.Email.Validate        (EmailAddress)
+import qualified Text.Email.Validate        as TEV
 import           Web.Segment.Types
 
 type SegmentApi
@@ -71,7 +75,7 @@ segmentClient = client segmentApi
 emptyIdentify :: Msg
 emptyIdentify = Identify emptyIdTraits
 emptyIdTraits :: IdTraits
-emptyIdTraits = IdTraits Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+emptyIdTraits = IdTraits Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON BatchedMsg  where
   toJSON (BatchedMsg uuid msgs sentAt) =
@@ -85,7 +89,7 @@ instance ToJSON BatchedMsg  where
     ]
 
 instance ToJSON FullMsg where
-  toJSON (FullMsg freeForm msg commonMsg ) =
+  toJSON (FullMsg freeform msg commonMsg ) =
     object (msgJson msg <> commonJson commonMsg)
     where
       commonJson  c  =
@@ -100,28 +104,72 @@ instance ToJSON FullMsg where
       msgJson msg = case msg of
         Identify {..} ->
           [ "type" .= ("identify" :: Text)
+          -- this is a bit sketchy: we should check the freeform list
+          -- first, to make sure it's not using a reserved trait.
+          -- however, no way to signal failure from within a ToJSON
+          -- impl. FIX
+          , "traits" .= object (idTraitsJSON idTraits <> freeformJSON freeform)
           -- uses "traits"
           ]
         Track {..}    ->
           [ "type" .= ("track" :: Text)
           , "event" .= trEvent
+          , "properties" .= object (trPropertiesJSON trProperties <> freeformJSON freeform)
           -- uses "properties" wtf
 --          , "properties" .= object (freeformJSON <> propertyJson props)
           ]
         Page pgname props  ->
           [
           ]
-        Screen {..}    -> undefined
-        Group {..} -> undefined
-        Alias {..} -> undefined
+        Screen {..}    -> []
+        Group {..} -> []
+        Alias {..} -> []
 
 --      propertyJson props = []
 --      commonPropertyJson props = []
 --       freeformJSON = Map.foldMapWithKey (\k v -> [k .= v]) freeForm
 
+freeformJSON :: Freeform -> [(Text,Value)]
+freeformJSON = map (\(k,v) -> k .= String v) . M.toList
+
+-- there must be a better way of getting a handle on it than this
+idTraitsJSON :: IdTraits -> [Pair]
+idTraitsJSON traits = map (\(k,fv) -> k .= fv traits) idSelectors
+
+  where idSelectors =
+          [ ("avatar", wrap (flattenURI idAvatar))
+          , ("birthday", wrap idBirthday)
+          , ("createdAt", wrap idCreatedAt)
+          , ("description",  wrap idDescription)
+          , ("email", wrap (\x -> BS8.unpack . TEV.toByteString <$> idEmail x))
+          , ("firstName", wrap idFirstName)
+          , ("gender", wrap idGender)
+          , ("lastName", wrap idLastName)
+          , ("phone", wrap idPhone)
+          , ("title", wrap idTitle)
+          , ("username", wrap idUsername)
+          , ("website", wrap (flattenURI idWebsite))
+          ]
+
+        flattenURI x = \a -> (\x -> x "") . uriToString id <$> x a
+
+        idKeys =  [ "avatar","birthday", "createdAt", "description", "email", "firstName"
+                  , "gender","lastName", "gender", "phone", "title", "username", "website"]
 
 
+        wrap :: ToJSON b => (a -> Maybe b) -> (a -> Maybe Value)
+        wrap x = \a -> toJSON <$> x a
 
+trPropertiesJSON :: TrackProperties -> [Pair]
+trPropertiesJSON properties =  map (\(k,fv) -> k .= fv properties) idSelectors
+  where
+    idSelectors = [("name", wrap trName)
+                  ,("revenue", wrap trRevenue)
+                  ,("currency", wrap (\x -> show <$> trCurrency x))
+                  ,("value", wrap trValue)
+                  ]
+    wrap :: ToJSON b => (a -> Maybe b) -> (a -> Maybe Value)
+    wrap x = \a -> toJSON <$> x a
 defaultContext = [aesonQQ|{"library" : { "name": "segment-api",
                                          "version" : #{showVersion version} } }|]
 

@@ -69,7 +69,9 @@ segmentClient = client segmentApi
 
 
 emptyIdentify :: Msg
-emptyIdentify = Identify $ IdTraits Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+emptyIdentify = Identify emptyIdTraits
+emptyIdTraits :: IdTraits
+emptyIdTraits = IdTraits Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON BatchedMsg  where
   toJSON (BatchedMsg uuid msgs sentAt) =

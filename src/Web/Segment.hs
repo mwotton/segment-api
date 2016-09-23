@@ -130,7 +130,7 @@ instance ToJSON FullMsg where
 --       freeformJSON = Map.foldMapWithKey (\k v -> [k .= v]) freeForm
 
 freeformJSON :: Freeform -> [(Text,Value)]
-freeformJSON = map (\(k,v) -> k .= String v) . M.toList
+freeformJSON = M.toList
 
 -- there must be a better way of getting a handle on it than this
 idTraitsJSON :: IdTraits -> [Pair]

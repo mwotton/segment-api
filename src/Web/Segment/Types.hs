@@ -148,7 +148,7 @@ data Id
 --   toJSON (IdentifiedUser t) = object ["userId"      .= t]
 
 -- this is controversial: possible Map Text Value makes more sense.
-type Freeform = Map Text Text
+type Freeform = Map Text Value
 emptyFreeform = Map.empty
 
 

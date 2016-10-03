@@ -89,7 +89,7 @@ instance ToJSON BatchedMsg  where
     ]
 
 instance ToJSON FullMsg where
-  toJSON (FullMsg freeform msg commonMsg ) =
+  toJSON (FullMsg freeform msg commonMsg context) =
     object (msgJson msg <> commonJson commonMsg)
     where
       commonJson  c  =
@@ -99,6 +99,7 @@ instance ToJSON FullMsg where
         in
         [ k .= u
         , "timestamp" .= cmTimestamp c
+        , "context" .= context
         ]
 
       msgJson msg = case msg of

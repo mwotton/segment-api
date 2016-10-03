@@ -48,7 +48,7 @@ data BatchedMsg
   deriving (Generic, Eq, Show, Typeable)
 
 
-data FullMsg = FullMsg Freeform Msg CommonMsg
+data FullMsg = FullMsg Freeform Msg CommonMsg Context
   deriving (Generic, Eq, Show, Typeable)
 
 
@@ -147,7 +147,8 @@ data SegmentId
 --   toJSON (Anonymous t)      = object ["anonymousId" .= t]
 --   toJSON (IdentifiedUser t) = object ["userId"      .= t]
 
--- this is controversial: possible Map Text Value makes more sense.
+type Context = Freeform
+
 type Freeform = Map Text Value
 emptyFreeform = Map.empty
 

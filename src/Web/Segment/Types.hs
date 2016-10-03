@@ -73,7 +73,7 @@ data Msg
     , grTraits  :: GroupTraits
     } --GroupId             Group -- Properties GroupTrait) (Properties CommonTrait)
   | Alias
-    { alPreviousId :: Id
+    { alPreviousId :: SegmentId
     } -- Id
   | TrackSemantic
     {
@@ -138,7 +138,7 @@ data GroupTraits = GroupTraits
 --
 -- these can be used just about anywhere - is legit to alias an
 -- Anonymous ID to another Anonymous ID, for instance.
-data Id
+data SegmentId
   = Anonymous Text
   | IdentifiedUser Text
   deriving (Generic, Eq, Show, Typeable)
@@ -155,12 +155,12 @@ emptyFreeform = Map.empty
 -- instance ToJSON UUID where
 --  toJSON = toJSON . UUID.toText
 
-emptyCommonMsg time uid = CommonMsg time uid Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+emptyCommonMsg time uid = CommonMsg time uid Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 data CommonMsg =
   CommonMsg
   { -- time when queued
     cmTimestamp :: UTCTime
-  , cmUid       :: Id
+  , cmUid       :: SegmentId
 
   -- optional fields
   , cmActive    :: Maybe Bool
@@ -172,6 +172,7 @@ data CommonMsg =
   , cmLocation  :: Maybe Location
   , cmNetwork   :: Maybe Network
   , cmOS        :: Maybe OS
+  , cmUserAgent :: Maybe Text
   -- TODO lots more fields https://segment.com/docs/spec/common/
   } deriving (Generic, Eq, Show, Typeable)
 

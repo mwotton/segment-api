@@ -1,5 +1,5 @@
 name:                segment-api
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Initial project template from stack
 description:         Please see README.md
 homepage:            https://github.com/mwotton/segment-api#readme
@@ -22,14 +22,13 @@ library
                , bytestring
                , cases
                , containers
-               , country-codes
-               , country-codes
                , currency
                , Decimal
                , email-validate
                , http-client
                , http-client-tls
                , iproute
+               , iso3166-country-codes
                , network-uri
                , servant
                , servant-client

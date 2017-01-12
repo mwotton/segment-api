@@ -19,12 +19,10 @@ import           Data.Aeson.Types           (Pair)
 
 import           Data.Aeson.QQ              (aesonQQ)
 import qualified Data.ByteString.Char8      as BS8
-import           Data.CountryCodes          (CountryCode)
-import           Data.CountryCodes          (CountryCode)
 import           Data.Decimal               (Decimal)
 import           Data.IP
+import           Data.ISO3166_CountryCodes  (CountryCode)
 import           Data.Map                   (Map)
-import qualified Data.Map                   as Map
 import qualified Data.Map                   as M
 import           Data.Monoid                ((<>))
 import           Data.Set                   (Set)
@@ -34,7 +32,7 @@ import qualified Data.Text                  as T
 import           Data.Time                  (UTCTime)
 import           Data.Time.Calendar         (Day)
 import           Data.Typeable
-import           Data.UUID
+import           Data.UUID                  (UUID)
 import qualified Data.UUID                  as UUID
 import           Data.Version               (showVersion)
 import           GHC.Generics               (Generic)

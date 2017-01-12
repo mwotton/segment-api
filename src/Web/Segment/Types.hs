@@ -2,33 +2,34 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Web.Segment.Types where
 
-import           Control.Monad       (guard, mzero)
-import           Currency            (ISO4217Currency)
-import           Data.Aeson          (FromJSON, ToJSON, Value (..), object,
-                                      parseJSON, toJSON, (.:), (.=))
-import           Data.Aeson.QQ       (aesonQQ)
-import           Data.CountryCodes   (CountryCode)
-import           Data.CountryCodes   (CountryCode)
-import           Data.Decimal        (Decimal)
+import           Control.Monad             (guard, mzero)
+import           Currency                  (ISO4217Currency)
+import           Data.Aeson                (FromJSON, ToJSON, Value (..),
+                                            object, parseJSON, toJSON, (.:),
+                                            (.=))
+import           Data.Aeson.QQ             (aesonQQ)
+import           Data.Decimal              (Decimal)
 import           Data.IP
-import           Data.Map            (Map)
-import qualified Data.Map            as Map
-import           Data.Monoid         ((<>))
-import           Data.Set            (Set)
-import qualified Data.Set            as Set
-import           Data.Text           (Text)
-import qualified Data.Text           as T
-import           Data.Time           (UTCTime)
-import           Data.Time.Calendar  (Day)
+import qualified Data.ISO3166_CountryCodes as CC
+import           Data.Map                  (Map)
+import qualified Data.Map                  as Map
+import           Data.Monoid               ((<>))
+import           Data.Set                  (Set)
+import qualified Data.Set                  as Set
+import           Data.Text                 (Text)
+import qualified Data.Text                 as T
+import           Data.Time                 (UTCTime)
+import           Data.Time.Calendar        (Day)
 import           Data.Typeable
-import           Data.UUID
-import qualified Data.UUID           as UUID
-import           Data.Version        (showVersion)
-import           Debug.Trace         (trace)
-import           GHC.Generics        (Generic)
-import           Network.URI         (URI)
-import           Paths_segment_api   (version)
-import           Text.Email.Validate (EmailAddress)
+import           Data.UUID                 (UUID)
+import qualified Data.UUID                 as UUID
+import           Data.Version              (showVersion)
+import           Debug.Trace               (trace)
+import           GHC.Generics              (Generic)
+import           Network.URI               (URI)
+import           Paths_segment_api         (version)
+import           Text.Email.Validate       (EmailAddress)
+import           Text.Read                 (readMaybe)
 
 data SegmentResponse = SegmentResponse
   deriving (Eq,Show)
@@ -38,7 +39,7 @@ instance FromJSON SegmentResponse where
 
     success <- o .: "success"
     guard (success == True)
-    return SegmentResponse
+    return $ SegmentResponse
   parseJSON _ = mzero
 
 -- | The sent-at field should be applied as close to send-time as
@@ -211,17 +212,33 @@ data Library = Library
   } deriving (Generic, Eq, Show, Typeable)
 instance ToJSON Library
 
+-- newtype to avoid needing to define Aeson instances for a datatype
+-- we don't own
+newtype OurCountryCode = OurCountryCode { unOurCountryCode :: CC.CountryCode }
+  deriving (Eq,Show,Ord)
+
+-- | to json: as a simple string
+instance ToJSON OurCountryCode where
+  toJSON = toJSON . CC.countryNameFromCode . unOurCountryCode
+
+-- | from json: as a simple string
+instance FromJSON OurCountryCode where
+  parseJSON (String s)
+    | Just a <- readMaybe (T.unpack s) = pure (OurCountryCode a)
+  parseJSON _ = fail "CountryCode"
+
 -- Unclear which of these are actually mandatory.
 -- region is not in the example, so assuming it's optional.
 data Location = Location
   { loCity      :: Text
-  , loCountry   :: CountryCode
+  , loCountry   :: OurCountryCode
   , loLatitude  :: Double
   , loLongitude :: Double
   , loRegion    :: Maybe Text
   , loSpeed     :: Double
   } deriving (Generic, Eq, Show, Typeable)
 instance ToJSON Location
+
 
 data Network = Network
   { neBluetooth :: Bool
@@ -240,7 +257,7 @@ instance ToJSON OS
 
 data Address = Address
   { adCity     :: Maybe City
-  , adCountry  :: Maybe CountryCode
+  , adCountry  :: Maybe OurCountryCode
   , adPostcode :: Maybe Postcode
   , adState    :: Maybe StateLoc
   , adStreet   :: Maybe Street

@@ -24,7 +24,6 @@ import           Data.Typeable
 import           Data.UUID                 (UUID)
 import qualified Data.UUID                 as UUID
 import           Data.Version              (showVersion)
-import           Debug.Trace               (trace)
 import           GHC.Generics              (Generic)
 import           Network.URI               (URI)
 import           Paths_segment_api         (version)
@@ -35,8 +34,7 @@ data SegmentResponse = SegmentResponse
   deriving (Eq,Show)
 
 instance FromJSON SegmentResponse where
-  parseJSON (Object o) =     trace (show o)  $ do
-
+  parseJSON (Object o) = do
     success <- o .: "success"
     guard (success == True)
     return $ SegmentResponse
